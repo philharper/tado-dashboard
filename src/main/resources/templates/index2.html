@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Heating Schedule</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+            color: #444;
+        }
+        h2 {
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+            outline: none;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #f1f1f1;
+        }
+        .tab.active {
+            background-color: #e0e0e0;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border-spacing: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f4f4f4;
+        }
+        tr:hover {
+            background-color: #e0f7fa;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+        }
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        td:first-child, th:first-child {
+            text-align: left;
+        }
+        @media (max-width: 768px) {
+            table {
+                width: 100%;
+            }
+            th, td {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>Heating Schedule</h1>
+
+<div class="tabs">
+    <button class="tab active" onclick="showTab('Monday')">Monday</button>
+    <button class="tab" onclick="showTab('Tuesday')">Tuesday</button>
+    <button class="tab" onclick="showTab('Wednesday')">Wednesday</button>
+    <button class="tab" onclick="showTab('Thursday')">Thursday</button>
+    <button class="tab" onclick="showTab('Friday')">Friday</button>
+    <button class="tab" onclick="showTab('Saturday')">Saturday</button>
+    <button class="tab" onclick="showTab('Sunday')">Sunday</button>
+</div>
+
+<div th:each="entry : ${weeklySchedule.heatingSchedule}" th:with="heatingSchedule=${entry.value}" class="tab-content" th:id="${entry.key}" th:classappend="${entry.key == 'Monday' ? ' active' : ''}">
+    <h2 th:text="${entry.key}"></h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Room</th>
+            <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${hour}"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="roomSchedule : ${heatingSchedule.roomSchedules}">
+            <td th:text="${roomSchedule.name}"></td>
+            <td th:each="entry : ${roomSchedule.hourlyTemperatures}" th:with="hourlyTemperature=${entry.value}"
+                th:text="${hourlyTemperature.temperature}"
+                th:bgcolor="${hourlyTemperature.colour}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function showTab(day) {
+        var tabs = document.querySelectorAll('.tab');
+        var contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        contents.forEach(function(content) {
+            content.classList.remove('active');
+        });
+
+        document.querySelector('.tab[onclick="showTab(\'' + day + '\')"]').classList.add('active');
+        document.getElementById(day).classList.add('active');
+    }
+</script>
+
+</body>
+</html>
