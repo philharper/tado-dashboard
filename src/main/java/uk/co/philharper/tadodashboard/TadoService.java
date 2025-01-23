@@ -1,5 +1,6 @@
 package uk.co.philharper.tadodashboard;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,17 +11,13 @@ import uk.co.philharper.tadodashboard.model.Timetable;
 import uk.co.philharper.tadodashboard.model.UserInfo;
 import uk.co.philharper.tadodashboard.model.Zone;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class TadoService {
-
-    @Value("${tado.api.auth-url}")
-    private String authUrl;
-
-    @Value("${tado.api.base-url}")
-    private String baseUrl;
 
     @Value("${tado.api.username}")
     private String username;
@@ -35,6 +32,8 @@ public class TadoService {
     private String clientSecret;
 
     private String accessToken;
+
+    private LocalDateTime tokenExpiry;
 
     @Autowired
     TadoClient tadoClient;
@@ -53,6 +52,7 @@ public class TadoService {
 
         Map<String, Object> responseBody = tadoAuthClient.authenticate(body);
         this.accessToken = "Bearer " + responseBody.get("access_token");
+        this.tokenExpiry = LocalDateTime.now().plusSeconds((int) responseBody.get("expires_in") - 60);
     }
 
     public UserInfo getUserInfo() {
@@ -71,8 +71,8 @@ public class TadoService {
         return tadoClient.getBlocks(homeId, zoneId, timetableTypeId, accessToken);
     }
 
-    public String getDayReport(int homeId, int zoneId) {
-        return tadoClient.getDayReport(homeId, zoneId, accessToken);
+    public boolean isAuthenticated() {
+        return this.accessToken != null && tokenExpiry.isAfter(LocalDateTime.now());
     }
 }
 

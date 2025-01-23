@@ -20,6 +20,32 @@
         h2 {
             text-align: center;
         }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+            outline: none;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #f1f1f1;
+        }
+        .tab.active {
+            background-color: #e0e0e0;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
         table {
             width: 90%;
             margin: 20px auto;
@@ -68,7 +94,17 @@
 <body>
 <h1>Heating Schedule</h1>
 
-<div th:each="entry : ${weeklySchedule.heatingSchedule}" th:with="heatingSchedule=${entry.value}">
+<div class="tabs">
+    <button class="tab active" onclick="showTab('MONDAY')">Monday</button>
+    <button class="tab" onclick="showTab('TUESDAY')">Tuesday</button>
+    <button class="tab" onclick="showTab('WEDNESDAY')">Wednesday</button>
+    <button class="tab" onclick="showTab('THURSDAY')">Thursday</button>
+    <button class="tab" onclick="showTab('FRIDAY')">Friday</button>
+    <button class="tab" onclick="showTab('SATURDAY')">Saturday</button>
+    <button class="tab" onclick="showTab('SUNDAY')">Sunday</button>
+</div>
+
+<div th:each="entry : ${weeklySchedule.heatingSchedule}" th:with="heatingSchedule=${entry.value}" class="tab-content" th:id="${entry.key}" th:classappend="${entry.key == 'MONDAY' ? ' active' : ''}">
     <h2 th:text="${entry.key}"></h2>
     <table>
         <thead>
@@ -87,6 +123,42 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    function showTab(day) {
+        var tabs = document.querySelectorAll('.tab');
+        var contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        contents.forEach(function(content) {
+            content.classList.remove('active');
+        });
+
+        document.querySelector('.tab[onclick="showTab(\'' + day + '\')"]').classList.add('active');
+        document.getElementById(day).classList.add('active');
+    }
+
+    function getCurrentDayAsText() {
+        const daysOfWeek = [
+            "SUNDAY",
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY"
+        ];
+        const currentDayIndex = new Date().getDay(); // Get the current day index (0 = Sunday, 6 = Saturday)
+        return daysOfWeek[currentDayIndex];
+    }
+
+    window.onload = function() {
+        showTab(getCurrentDayAsText());
+    };
+</script>
 
 </body>
 </html>

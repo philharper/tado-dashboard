@@ -3,10 +3,13 @@ package uk.co.philharper.tadodashboard;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.co.philharper.tadodashboard.model.Block;
+import uk.co.philharper.tadodashboard.model.Day;
+import uk.co.philharper.tadodashboard.model.DayType;
 import uk.co.philharper.tadodashboard.model.HeatingSchedule;
 import uk.co.philharper.tadodashboard.model.HourlyTemperature;
 import uk.co.philharper.tadodashboard.model.Room;
 import uk.co.philharper.tadodashboard.model.RoomSchedule;
+import uk.co.philharper.tadodashboard.model.TimetableType;
 import uk.co.philharper.tadodashboard.model.WeeklySchedule;
 
 import java.time.LocalTime;
@@ -18,12 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Slf4j
 public class HeatingScheduleMapper {
 
-    static List<String> days = List.of("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
-
-    static Map<String, String> gradientMap = Map.of(
+    private static final Map<String, String> GRADIENT_MAP = Map.of(
             "0", "#D3D3D3",
             "15.0", "#0bbd72",
             "16.0", "#60ad3c",
@@ -37,44 +37,83 @@ public class HeatingScheduleMapper {
     );
 
     public static WeeklySchedule mapRoomsToHeatingSchedule(Map<String, Room> room) {
-        log.info("Mapping rooms to heating schedule");
         List<RoomSchedule> roomSchedules = new ArrayList<>();
         var weeklySchedule = new WeeklySchedule(new LinkedHashMap<>());
 
         for (Map.Entry<String, Room> roomEntry : room.entrySet()) {
-            String roomName = roomEntry.getKey();
-            List<Block> blocks = roomEntry.getValue().blocks();
+            var roomName = roomEntry.getKey();
+            var timetableType = roomEntry.getValue().timetableType();
+            var blocks = roomEntry.getValue().blocks();
 
-            Map<Integer, HourlyTemperature> hourlyTemperatures = new HashMap<>();
-
-            for (Block block : blocks) {
-
-                LocalTime startTime = LocalTime.parse(block.start());
-                LocalTime endTime = LocalTime.parse(block.end());
-                Double temperature = getTemperature(block);
-                String power = block.setting().power();
-
-                int endHour = endTime.equals(LocalTime.MIDNIGHT) ? 24 : endTime.getHour();
-
-                for (int hour = startTime.getHour(); hour < endHour; hour++) {
-                    String value = temperature != null ? temperature.toString() : power;
-                    String colour = gradientMap.get(value);
-                    hourlyTemperatures.put(hour % 24, new HourlyTemperature(value, colour));
-                }
+            if (timetableType.equals(TimetableType.ONE_DAY)) {
+                mapWeeklySchedule(blocks, roomSchedules, roomName);
+            } else if (timetableType.equals(TimetableType.SEVEN_DAY)) {
+                mapDailySchedule(blocks, roomSchedules, roomName);
             }
-
-            roomSchedules.add(new RoomSchedule(roomName, hourlyTemperatures));
         }
 
         roomSchedules.sort(Comparator.comparing(rs -> rs.name().equals("Hot Water")));
 
-        for (String day : days) {
-            weeklySchedule.heatingSchedule().put(day, new HeatingSchedule(roomSchedules));
+        for (RoomSchedule roomSchedule : roomSchedules) {
+            if (!weeklySchedule.heatingSchedule().containsKey(roomSchedule.day())) {
+                weeklySchedule.heatingSchedule().put(roomSchedule.day(), new HeatingSchedule(new ArrayList<>()));
+            }
+            weeklySchedule.heatingSchedule().get(roomSchedule.day()).roomSchedules().add(roomSchedule);
         }
 
-        log.info("Finished mapping rooms to heating schedule");
-
         return weeklySchedule;
+    }
+
+    private static void mapDailySchedule(List<Block> blocks, List<RoomSchedule> roomSchedules, String roomName) {
+        Map<Day, Map<Integer, HourlyTemperature>> dailyHourlyTemperaturesMap = new HashMap<>();
+        for (Day day : Day.values()) {
+            dailyHourlyTemperaturesMap.put(day, new HashMap<>());
+        }
+
+        for (Block block : blocks) {
+            LocalTime startTime = LocalTime.parse(block.start());
+            LocalTime endTime = LocalTime.parse(block.end());
+            Double temperature = getTemperature(block);
+            String power = block.setting().power();
+
+            int endHour = endTime.equals(LocalTime.MIDNIGHT) ? 24 : endTime.getHour();
+            DayType dayType = block.dayType();
+
+            for (int hour = startTime.getHour(); hour < endHour; hour++) {
+                String value = temperature != null ? temperature.toString() : power;
+                String colour = GRADIENT_MAP.get(value);
+                Day day = Day.valueOf(dayType.name());
+                dailyHourlyTemperaturesMap.get(day).put(hour % 24, new HourlyTemperature(value, colour));
+            }
+        }
+
+        for (Day day : Day.values()) {
+            roomSchedules.add(new RoomSchedule(roomName, day, dailyHourlyTemperaturesMap.get(day)));
+        }
+    }
+
+    private static void mapWeeklySchedule(List<Block> blocks, List<RoomSchedule> roomSchedules, String roomName) {
+        Map<Integer, HourlyTemperature> hourlyTemperatures = new HashMap<>();
+
+        for (Block block : blocks) {
+
+            LocalTime startTime = LocalTime.parse(block.start());
+            LocalTime endTime = LocalTime.parse(block.end());
+            Double temperature = getTemperature(block);
+            String power = block.setting().power();
+
+            int endHour = endTime.equals(LocalTime.MIDNIGHT) ? 24 : endTime.getHour();
+
+            for (int hour = startTime.getHour(); hour < endHour; hour++) {
+                String value = temperature != null ? temperature.toString() : power;
+                String colour = GRADIENT_MAP.get(value);
+                hourlyTemperatures.put(hour % 24, new HourlyTemperature(value, colour));
+            }
+        }
+
+        for (Day day : Day.values()) {
+            roomSchedules.add(new RoomSchedule(roomName, day, hourlyTemperatures));
+        }
     }
 
     private static Double getTemperature(Block block) {

@@ -21,7 +21,10 @@ public class TadoController {
     public String getSchedules(Model model) {
         Map<String, Room> roomBlocks = new HashMap<>();
 
-        tadoService.authenticate();
+        if (!tadoService.isAuthenticated()) {
+            log.info("Authenticating with Tado API");
+            tadoService.authenticate();
+        }
 
         var userInfo = tadoService.getUserInfo();
 
@@ -32,11 +35,6 @@ public class TadoController {
             var timetable = tadoService.getActiveTimetable(homeId, zoneId);
             var blocks = tadoService.getBlocks(homeId, zoneId, timetable.id());
             roomBlocks.put(zone.name(), new Room(timetable.type(), blocks));
-
-            if (zone.name().equals("Living Room")) {
-                log.info("DAY REPORT");
-                log.info(tadoService.getDayReport(homeId, zoneId));
-            }
         });
 
         var weeklySchedule = HeatingScheduleMapper.mapRoomsToHeatingSchedule(roomBlocks);
@@ -44,7 +42,7 @@ public class TadoController {
         model.addAttribute("userInfo", userInfo);
         model.addAttribute("weeklySchedule", weeklySchedule);
 
-        return "index2";
+        return "index";
     }
 }
 
