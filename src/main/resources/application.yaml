@@ -6,8 +6,6 @@ tado:
   api:
     auth-url: https://auth.tado.com/oauth/token
     base-url: https://my.tado.com/api/v2
-    username: ${TADO_USERNAME}
-    password: ${TADO_PASSWORD}
     client-id: ${TADO_CLIENT_ID}
     client-secret: ${TADO_CLIENT_SECRET}
 

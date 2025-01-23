@@ -1,5 +1,6 @@
 package uk.co.philharper.tadodashboard;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -7,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import uk.co.philharper.tadodashboard.model.Room;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,14 +19,16 @@ public class TadoController {
     @Autowired
     private TadoService tadoService;
 
+    @Autowired
+    private HttpSession session;
+
     @GetMapping("/schedules")
     public String getSchedules(Model model) {
-        Map<String, Room> roomBlocks = new HashMap<>();
-
-        if (!tadoService.isAuthenticated()) {
-            log.info("Authenticating with Tado API");
-            tadoService.authenticate();
+        if (session.getAttribute("token") == null || ((LocalDateTime) session.getAttribute("expiry")).isBefore(LocalDateTime.now())) {
+            return "redirect:/login";
         }
+
+        Map<String, Room> roomBlocks = new HashMap<>();
 
         var userInfo = tadoService.getUserInfo();
 

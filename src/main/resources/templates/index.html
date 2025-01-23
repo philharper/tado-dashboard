@@ -89,6 +89,22 @@
                 padding: 10px;
             }
         }
+        .signout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .signout-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -123,6 +139,10 @@
         </tbody>
     </table>
 </div>
+
+<form th:action="@{/signout}" method="post">
+    <button type="submit" class="signout-button">Sign Out</button>
+</form>
 
 <script>
     function showTab(day) {
