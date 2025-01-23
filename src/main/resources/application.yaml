@@ -9,3 +9,6 @@ tado:
     client-id: ${TADO_CLIENT_ID}
     client-secret: ${TADO_CLIENT_SECRET}
 
+server:
+  port: ${PORT:8080}
+
