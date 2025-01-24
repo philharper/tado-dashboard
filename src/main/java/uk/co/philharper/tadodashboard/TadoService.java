@@ -32,6 +32,7 @@ public class TadoService {
     private HttpSession session;
 
     public void authenticate(String username, String password) {
+        log.info("Log in: {}", username.substring(0, 2));
         var token = getAuthValues(username, password);
         session.setAttribute("token", "Bearer " + token.accessToken());
         session.setAttribute("expiry", LocalDateTime.now().plusSeconds(token.expiresIn()));
