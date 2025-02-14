@@ -1,5 +1,6 @@
 package uk.co.philharper.tadodashboard;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,15 +20,19 @@ public interface TadoClient {
     @GetMapping(value = "me", produces = "application/json")
     UserInfo getUserInfo(@RequestHeader("Authorization") String bearerToken);
 
+    @Cacheable(value = "zonesCache", key = "#homeId + '_' + #bearerToken")
     @GetMapping(value = "homes/{homeId}/zones", produces = "application/json")
     List<Zone> getZones(@PathVariable("homeId") int homeId, @RequestHeader("Authorization") String bearerToken);
 
+    @Cacheable(value = "timetableCache", key = "#zoneId + '_' + #bearerToken")
     @GetMapping(value = "homes/{homeId}/zones/{zoneId}/schedule/activeTimetable", produces = "application/json")
     Timetable getActiveTimetable(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @RequestHeader("Authorization") String bearerToken);
 
+    @Cacheable(value = "blocksCache", key = "#zoneId + '_' + #timetableTypeId + '_' + #bearerToken")
     @GetMapping(value = "/homes/{homeId}/zones/{zoneId}/schedule/timetables/{timetableTypeId}/blocks", produces = "application/json")
     List<Block> getBlocks(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @PathVariable("timetableTypeId") int timetableTypeId, @RequestHeader("Authorization") String bearerToken);
 
+    @Cacheable(value = "reportCache", key = "#zoneId + '_' + #date + '_' + #bearerToken")
     @GetMapping(value = "/homes/{homeId}/zones/{zoneId}/dayReport", produces = "application/json")
     DayReport getDayReport(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @RequestParam String date, @RequestHeader("Authorization") String bearerToken);
 }

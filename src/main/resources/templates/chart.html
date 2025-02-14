@@ -41,6 +41,38 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+        .date-picker-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .date-picker-container label {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .date-picker-container input[type="date"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .date-picker-container input[type="date"]:focus {
+            border-color: #4CAF50;
+        }
+        .date-picker-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .date-picker-container button:hover {
+            background-color: #45a049;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -52,11 +84,13 @@
     <a href="/chart">Temperature Chart</a>
 </div>
 
-<form method="get" action="/chart">
-    <label for="date">Select Date: </label>
-    <input type="date" id="date" name="date">
-    <button type="submit">Show Chart</button>
-</form>
+<div class="date-picker-container">
+    <form method="get" action="/chart">
+        <label for="date">Select Date: </label>
+        <input type="date" id="date" name="date">
+        <button type="submit">Show Chart</button>
+    </form>
+</div>
 
 <div class="chart-container">
     <canvas id="temperatureChart"></canvas>
@@ -64,8 +98,10 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var today = new Date().toISOString().split('T')[0];
-        document.getElementById('date').value = today;
+        const urlParams = new URLSearchParams(window.location.search);
+        const dateParam = urlParams.get('date');
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = dateParam ? dateParam : today;
     });
 </script>
 <script th:inline="javascript">
