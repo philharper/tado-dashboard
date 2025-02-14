@@ -105,7 +105,17 @@
         .signout-button:hover {
             background-color: #45a049;
         }
+        .chart-container {
+            width: 80%;
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <h1>Heating Schedule</h1>
@@ -138,6 +148,10 @@
         </tr>
         </tbody>
     </table>
+</div>
+
+<div class="chart-container">
+    <canvas id="temperatureChart"></canvas>
 </div>
 
 <form th:action="@{/signout}" method="post">
@@ -178,6 +192,89 @@
     window.onload = function() {
         showTab(getCurrentDayAsText());
     };
+</script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var dayReports = /*[[${dayReports}]]*/ {};
+    console.log("DayReports:", dayReports);
+    /*]]>*/
+
+    document.addEventListener("DOMContentLoaded", function () {
+        if (!dayReports || Object.keys(dayReports).length === 0) {
+            console.warn("No temperature data available.");
+            return;
+        }
+
+        const zoneNames = Object.keys(dayReports);
+        const datasets = [];
+        let allTimestamps = new Set();
+
+        zoneNames.forEach(zone => {
+            const report = dayReports[zone];
+            if (!report.measuredData || !report.measuredData.insideTemperature || !report.measuredData.insideTemperature.dataPoints) {
+                console.warn(`No data available for zone: ${zone}`);
+                return;
+            }
+
+            const dataPoints = report.measuredData.insideTemperature.dataPoints;
+            const timestamps = dataPoints.map(dp => new Date(dp.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            const temperatures = dataPoints.map(dp => dp.value.celsius);
+
+            // Store timestamps for alignment
+            timestamps.forEach(t => allTimestamps.add(t));
+
+            // Create dataset for each zone
+            datasets.push({
+                label: zone,
+                data: temperatures,
+                borderColor: getRandomColor(),
+                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#4CAF50'
+            });
+        });
+
+        if (datasets.length === 0) {
+            console.warn("No valid datasets to display.");
+            return;
+        }
+
+        // Sort timestamps
+        const sortedTimestamps = Array.from(allTimestamps).sort();
+
+        // Create Chart
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sortedTimestamps,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Helper function to get random colors for different zones
+        function getRandomColor() {
+            return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+        }
+    });
 </script>
 
 </body>

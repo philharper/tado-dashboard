@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import uk.co.philharper.tadodashboard.model.DayReport;
 import uk.co.philharper.tadodashboard.model.Room;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class TadoController {
         }
 
         Map<String, Room> roomBlocks = new HashMap<>();
+        Map<String, DayReport> dayReports = new HashMap<>();
 
         var userInfo = tadoService.getUserInfo();
 
@@ -39,12 +41,18 @@ public class TadoController {
             var timetable = tadoService.getActiveTimetable(homeId, zoneId);
             var blocks = tadoService.getBlocks(homeId, zoneId, timetable.id());
             roomBlocks.put(zone.name(), new Room(timetable.type(), blocks));
+
+            if (!zone.name().equals("Hot Water")) {
+                dayReports.put(zone.name(), tadoService.getDayReport(homeId, zoneId));
+            }
         });
 
         var weeklySchedule = HeatingScheduleMapper.mapRoomsToHeatingSchedule(roomBlocks);
 
         model.addAttribute("userInfo", userInfo);
         model.addAttribute("weeklySchedule", weeklySchedule);
+        log.info(dayReports.toString());
+        model.addAttribute("dayReports", dayReports);
 
         return "index";
     }

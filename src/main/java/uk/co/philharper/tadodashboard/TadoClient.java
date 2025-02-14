@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import uk.co.philharper.tadodashboard.model.Block;
+import uk.co.philharper.tadodashboard.model.DayReport;
 import uk.co.philharper.tadodashboard.model.Timetable;
 import uk.co.philharper.tadodashboard.model.UserInfo;
 import uk.co.philharper.tadodashboard.model.Zone;
@@ -27,5 +28,5 @@ public interface TadoClient {
     List<Block> getBlocks(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @PathVariable("timetableTypeId") int timetableTypeId, @RequestHeader("Authorization") String bearerToken);
 
     @GetMapping(value = "/homes/{homeId}/zones/{zoneId}/dayReport", produces = "application/json")
-    String getDayReport(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @RequestHeader("Authorization") String bearerToken);
+    DayReport getDayReport(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @RequestHeader("Authorization") String bearerToken);
 }
