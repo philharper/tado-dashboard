@@ -54,8 +54,8 @@ public class TadoService {
         return tadoClient.getBlocks(homeId, zoneId, timetableTypeId, getToken());
     }
 
-    public DayReport getDayReport(int homeId, int zoneId) {
-        return tadoClient.getDayReport(homeId, zoneId, getToken());
+    public DayReport getDayReport(int homeId, int zoneId, String date) {
+        return tadoClient.getDayReport(homeId, zoneId, date, getToken());
     }
 
     private String getToken() {

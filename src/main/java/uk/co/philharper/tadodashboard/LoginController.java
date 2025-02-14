@@ -27,7 +27,7 @@ public class LoginController {
     public String login(@RequestParam String username, @RequestParam String password, Model model) {
         try {
             tadoService.authenticate(username, password);
-            return "redirect:/schedules";
+            return "redirect:/schedule";
         } catch (Exception e) {
             model.addAttribute("error", "Invalid credentials");
             return "login";
