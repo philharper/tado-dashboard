@@ -23,18 +23,63 @@ import java.util.Map;
 @Component
 public class HeatingScheduleMapper {
 
-    private static final Map<String, String> GRADIENT_MAP = Map.of(
-            "0", "#D3D3D3",
-            "16.0", "#60ad3c",
-            "17.0", "#8a9800",
-            "18.0", "#aa7f00",
-            "19.0", "#c36013",
-            "19.5", "#c36013",
-            "20.0", "#d03939",
-            "21.0", "#d03939",
-            "OFF", "#D3D3D3",
-            "ON", "#d03939"
-    );
+    private static final Map<String, String> GRADIENT_MAP;
+
+    static {
+        GRADIENT_MAP = new HashMap<>();
+
+        // Blue range (5.0 - 9.5)
+        GRADIENT_MAP.put("5.0", "#6699FF");   // Blue
+        GRADIENT_MAP.put("5.5", "#66A3FF");   // Lighter Blue
+        GRADIENT_MAP.put("6.0", "#66B3FF");   // Lighter Blue
+        GRADIENT_MAP.put("6.5", "#66CCFF");   // Light Blue
+        GRADIENT_MAP.put("7.0", "#66D9FF");   // Very Light Blue
+        GRADIENT_MAP.put("7.5", "#66E5FF");   // Pale Blue
+        GRADIENT_MAP.put("8.0", "#66F2FF");   // Very Pale Blue
+        GRADIENT_MAP.put("8.5", "#66FFFF");   // Near White Blue
+        GRADIENT_MAP.put("9.0", "#66CCFF");   // Light Blue
+        GRADIENT_MAP.put("9.5", "#66B3FF");   // Lighter Blue
+
+        // Green range (10.0 - 19.5)
+        GRADIENT_MAP.put("10.0", "#33CC66");  // Green (Starts green)
+        GRADIENT_MAP.put("10.5", "#40D25F");  // Lighter Green
+        GRADIENT_MAP.put("11.0", "#4DD75B");  // Lighter Green
+        GRADIENT_MAP.put("11.5", "#5AD850");  // Soft Green
+        GRADIENT_MAP.put("12.0", "#60AD3C");  // Medium Green
+        GRADIENT_MAP.put("12.5", "#6BBF3E");  // Light Green
+        GRADIENT_MAP.put("13.0", "#77C640");  // Light Green
+        GRADIENT_MAP.put("13.5", "#8AD52B");  // Greenish Yellow
+        GRADIENT_MAP.put("14.0", "#8A9800");  // Yellow-Green
+        GRADIENT_MAP.put("14.5", "#A1B800");  // Yellow-Green
+        GRADIENT_MAP.put("15.0", "#B0D400");  // Yellow-Green
+        GRADIENT_MAP.put("15.5", "#B8D800");  // Light Yellow
+        GRADIENT_MAP.put("16.0", "#8A9800");  // Yellow-Green
+        GRADIENT_MAP.put("16.5", "#A1B800");  // Yellow-Green
+        GRADIENT_MAP.put("17.0", "#B0D400");  // Yellow-Green
+        GRADIENT_MAP.put("17.5", "#B8D800");  // Light Yellow
+        GRADIENT_MAP.put("18.0", "#90B800");  // Yellow-Green
+        GRADIENT_MAP.put("18.5", "#A0C800");  // Yellow-Green
+        GRADIENT_MAP.put("19.0", "#A9D000");  // Yellow-Green
+        GRADIENT_MAP.put("19.5", "#B2D800");  // Light Green-Yellow
+
+        // Red range (20.0 - 25.0)
+        GRADIENT_MAP.put("20.0", "#D03939");  // Red (Start of Red)
+        GRADIENT_MAP.put("20.5", "#D03232");  // Deeper Red
+        GRADIENT_MAP.put("21.0", "#D02C2C");  // Red
+        GRADIENT_MAP.put("21.5", "#D02727");  // Darker Red
+        GRADIENT_MAP.put("22.0", "#D02323");  // Intense Red
+        GRADIENT_MAP.put("22.5", "#D01F1F");  // Dark Red
+        GRADIENT_MAP.put("23.0", "#D01B1B");  // Darker Red
+        GRADIENT_MAP.put("23.5", "#D01818");  // Very Dark Red
+        GRADIENT_MAP.put("24.0", "#D01414");  // Deep Red
+        GRADIENT_MAP.put("24.5", "#D01010");  // Deepest Red
+        GRADIENT_MAP.put("25.0", "#D00000");  // Strong Red
+
+        // Special states
+        GRADIENT_MAP.put("ON", "#D03939");    // Red (ON state)
+        GRADIENT_MAP.put("OFF", "#D3D3D3");   // Grey (OFF state)
+    }
+
 
     public static WeeklySchedule mapRoomsToHeatingSchedule(Map<String, Room> room) {
         List<RoomSchedule> roomSchedules = new ArrayList<>();
