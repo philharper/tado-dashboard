@@ -28,7 +28,6 @@ public interface TadoClient {
     @GetMapping(value = "homes/{homeId}/zones/{zoneId}/schedule/activeTimetable", produces = "application/json")
     Timetable getActiveTimetable(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @RequestHeader("Authorization") String bearerToken);
 
-    @Cacheable(value = "blocksCache", key = "#zoneId + '_' + #timetableTypeId + '_' + #bearerToken")
     @GetMapping(value = "/homes/{homeId}/zones/{zoneId}/schedule/timetables/{timetableTypeId}/blocks", produces = "application/json")
     List<Block> getBlocks(@PathVariable("homeId") int homeId, @PathVariable("zoneId") int zoneId, @PathVariable("timetableTypeId") int timetableTypeId, @RequestHeader("Authorization") String bearerToken);
 

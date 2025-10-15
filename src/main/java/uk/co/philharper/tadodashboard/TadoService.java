@@ -26,17 +26,10 @@ public class TadoService {
     private TadoClient tadoClient;
 
     @Autowired
-    private TadoAuthClient tadoAuthClient;
+    private TadoOAuthClient tadoOAuthClient;
 
     @Autowired
     private HttpSession session;
-
-    public void authenticate(String username, String password) {
-        log.info("Log in: {}", username.substring(0, 2));
-        var token = getAuthValues(username, password);
-        session.setAttribute("token", "Bearer " + token.accessToken());
-        session.setAttribute("expiry", LocalDateTime.now().plusSeconds(token.expiresIn()));
-    }
 
     public UserInfo getUserInfo() {
         return tadoClient.getUserInfo(getToken());
@@ -62,14 +55,23 @@ public class TadoService {
         return (String) session.getAttribute("token");
     }
 
-    private AuthorisationResponse getAuthValues(String username, String password) {
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "password");
-        body.add("username", username);
-        body.add("password", password);
-        body.add("client_id", clientId);
-        body.add("client_secret", clientSecret);
+    public DeviceAuthorisationResponse authoriseDevice() {
+        var deviceAuthReponse = tadoOAuthClient.authorizeDevice(clientId, "offline_access");
+        session.setAttribute("deviceCode", deviceAuthReponse.deviceCode());
+        return deviceAuthReponse;
+    }
 
-        return tadoAuthClient.authenticate(body);
+    public TokenResponse getTokenResponse() {
+        try {
+            var token = tadoOAuthClient.getToken(clientId, (String) session.getAttribute("deviceCode"), "urn:ietf:params:oauth:grant-type:device_code");
+            if (token.getStatusCode().is2xxSuccessful()) {
+                session.setAttribute("token", "Bearer " + token.getBody().accessToken());
+                session.setAttribute("expiry", LocalDateTime.now().plusSeconds(token.getBody().expiresIn()));
+            }
+            return token.getBody();
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 }

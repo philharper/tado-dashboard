@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <script>
+        window.onload = function() {
+            const url = "[[${verificationUriComplete}]]";
+            window.open(url, '_blank');
+            window.location.href = '/login-wait';
+        }
+    </script>
+</head>
+<body>
+<p>Redirecting to verification page...</p>
+</body>
+</html>

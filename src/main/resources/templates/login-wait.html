@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waiting for Login</title>
+    <meta http-equiv="refresh" content="5">
+    <style>
+        body {
+            background: #f7f9fa;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .spinner {
+            margin: 2rem auto;
+            width: 48px;
+            height: 48px;
+            border: 6px solid #e3e3e3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h2 {
+            color: #2d3a4b;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #4a5a6a;
+            font-size: 1.1rem;
+        }
+    </style>
+    <script>
+        setTimeout(function() {
+            window.location.reload();
+        }, 5000);
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="spinner"></div>
+    <h2>Waiting for authentication...</h2>
+    <p>
+        Please complete the login in the newly opened tab.<br>
+        This page will refresh automatically every 5 seconds.
+    </p>
+</div>
+</body>
+</html>

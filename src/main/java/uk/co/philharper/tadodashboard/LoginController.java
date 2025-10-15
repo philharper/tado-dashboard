@@ -8,7 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import org.springframework.web.servlet.view.RedirectView;
 
 
 @Controller
@@ -19,24 +19,24 @@ public class LoginController {
     private TadoService tadoService;
 
     @GetMapping("/login")
-    public String loginForm() {
-        return "login";
+    public String loginForm(Model model) {
+        var deviceAuthorisationResponse = tadoService.authoriseDevice();
+        model.addAttribute("verificationUriComplete", deviceAuthorisationResponse.verificationUriComplete());
+        return "verification";
     }
 
-    @PostMapping("/login")
-    public String login(@RequestParam String username, @RequestParam String password, Model model) {
-        try {
-            tadoService.authenticate(username, password);
+    @GetMapping("/login-wait")
+    public String loginWait() {
+        var tokenResponse = tadoService.getTokenResponse();
+        if (tokenResponse != null) {
             return "redirect:/schedule";
-        } catch (Exception e) {
-            model.addAttribute("error", "Invalid credentials");
-            return "login";
         }
+        return "login-wait";
     }
 
     @PostMapping("/signout")
     public String signOut(HttpSession session) {
         session.invalidate();
-        return "redirect:/login";
+        return "logout";
     }
 }
