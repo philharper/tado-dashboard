@@ -3,10 +3,13 @@ package uk.co.philharper.tadodashboard;
 import org.springframework.stereotype.Component;
 import uk.co.philharper.tadodashboard.model.BoilerRuntimeEstimate;
 import uk.co.philharper.tadodashboard.model.BoilerRuntimeWindow;
+import uk.co.philharper.tadodashboard.model.BooleanInterval;
+import uk.co.philharper.tadodashboard.model.CallForHeatInterval;
 import uk.co.philharper.tadodashboard.model.DataPoint;
 import uk.co.philharper.tadodashboard.model.Day;
 import uk.co.philharper.tadodashboard.model.DayReport;
 import uk.co.philharper.tadodashboard.model.HourlyTemperature;
+import uk.co.philharper.tadodashboard.model.SettingInterval;
 import uk.co.philharper.tadodashboard.model.RoomSchedule;
 import uk.co.philharper.tadodashboard.model.WeeklySchedule;
 
@@ -26,7 +29,6 @@ public class BoilerRuntimeEstimator {
     private static final int MIN_INTERVAL_MINUTES = 3;
     private static final double BASE_RISE_PER_HOUR = 0.12;
     private static final double BOOST_RISE_PER_HOUR = 0.45;
-
     public BoilerRuntimeEstimate estimate(Map<String, DayReport> dayReports, WeeklySchedule weeklySchedule, Day day) {
         Map<String, Map<Integer, Double>> targetsByRoom = buildTargetsByRoom(weeklySchedule, day);
         List<RoomIntervalSignal> roomSignals = buildRoomSignals(dayReports, targetsByRoom);
@@ -73,6 +75,8 @@ public class BoilerRuntimeEstimator {
             long heatingRooms = activeSignals.stream().filter(RoomIntervalSignal::likelyHeating).count();
             long strongRooms = activeSignals.stream().filter(RoomIntervalSignal::strongHeating).count();
             long boostedRooms = activeSignals.stream().filter(RoomIntervalSignal::boostedHeating).count();
+            long callingRooms = activeSignals.stream().filter(RoomIntervalSignal::callingForHeat).count();
+            boolean heatRequestObserved = activeSignals.stream().anyMatch(RoomIntervalSignal::heatRequestKnown);
 
             double aggregateEvidence = activeSignals.stream()
                     .map(RoomIntervalSignal::evidence)
@@ -87,8 +91,16 @@ public class BoilerRuntimeEstimator {
                     || (boostedRooms >= 1 && heatingRooms >= 1)
                     || aggregateEvidence >= 1.45;
 
+            if (heatRequestObserved && callingRooms == 0) {
+                intervalSupported = false;
+            }
+
             boolean intervalOn = intervalSupported
                     || (boilerOn && (demandingRooms >= 2 || boostedRooms >= 1) && aggregateEvidence >= 0.95);
+
+            if (heatRequestObserved && callingRooms == 0) {
+                intervalOn = false;
+            }
 
             if (intervalSupported) {
                 supportingIntervals++;
@@ -147,6 +159,15 @@ public class BoilerRuntimeEstimator {
             }
 
             List<DataPoint> points = dayReport.measuredData().insideTemperature().dataPoints();
+            List<CallForHeatInterval> callForHeatIntervals = dayReport.callForHeat() == null
+                    ? List.of()
+                    : dayReport.callForHeat().dataIntervals();
+            List<SettingInterval> settingIntervals = dayReport.settings() == null
+                    ? List.of()
+                    : dayReport.settings().dataIntervals();
+            List<BooleanInterval> sunnyIntervals = dayReport.weather() == null || dayReport.weather().sunny() == null
+                    ? List.of()
+                    : dayReport.weather().sunny().dataIntervals();
             Map<Integer, Double> hourlyTargets = targetsByRoom.getOrDefault(roomName, Map.of());
 
             for (int index = 1; index < points.size(); index++) {
@@ -166,24 +187,33 @@ public class BoilerRuntimeEstimator {
                 double demandScore = tempGap <= 0.0 ? 0.0 : clamp(tempGap / 1.8);
                 double riseScore = clamp((slopePerHour - BASE_RISE_PER_HOUR) / 0.9);
                 boolean boostedHeating = slopePerHour >= BOOST_RISE_PER_HOUR && (currentTemp - previousTemp) >= 0.08;
+                HeatRequestState heatRequestState = resolveHeatRequestState(callForHeatIntervals, previous.timestamp(), current.timestamp());
+                boolean manualBoost = resolveManualBoost(settingIntervals, previous.timestamp(), current.timestamp());
+                boolean sunny = resolveSunnyState(sunnyIntervals, previous.timestamp(), current.timestamp());
 
-                if (demandScore == 0.0 && !boostedHeating) {
+                if (demandScore == 0.0 && !boostedHeating && !manualBoost) {
                     continue;
                 }
 
                 double evidence = Math.max(
                         (demandScore * 0.7) + (riseScore * 0.3),
-                        boostedHeating ? 0.78 + (riseScore * 0.22) : 0.0
+                        (boostedHeating || manualBoost) ? 0.78 + (riseScore * 0.22) : 0.0
                 );
+
+                if (sunny && !manualBoost && !heatRequestState.callingForHeat()) {
+                    evidence *= 0.55;
+                }
 
                 signals.add(new RoomIntervalSignal(
                         previous.timestamp(),
                         current.timestamp(),
                         evidence,
-                        demandScore >= 0.35 || boostedHeating,
-                        (demandScore >= 0.35 && riseScore >= 0.12) || boostedHeating,
-                        (demandScore >= 0.6 && riseScore >= 0.26) || slopePerHour >= 0.7,
-                        boostedHeating
+                        demandScore >= 0.35 || boostedHeating || manualBoost,
+                        (demandScore >= 0.35 && riseScore >= 0.12) || boostedHeating || manualBoost,
+                        (demandScore >= 0.6 && riseScore >= 0.26) || slopePerHour >= 0.7 || manualBoost,
+                        boostedHeating || manualBoost,
+                        heatRequestState.known(),
+                        heatRequestState.callingForHeat()
                 ));
             }
         });
@@ -201,6 +231,70 @@ public class BoilerRuntimeEstimator {
 
     private double clamp(double value) {
         return Math.max(0.0, Math.min(1.0, value));
+    }
+
+    private HeatRequestState resolveHeatRequestState(List<CallForHeatInterval> callForHeatIntervals, LocalDateTime start, LocalDateTime end) {
+        if (callForHeatIntervals == null || callForHeatIntervals.isEmpty()) {
+            return new HeatRequestState(false, false);
+        }
+
+        boolean intervalKnown = callForHeatIntervals.stream()
+                .anyMatch(interval -> overlaps(interval, start, end));
+
+        if (!intervalKnown) {
+            return new HeatRequestState(false, false);
+        }
+
+        boolean callingForHeat = callForHeatIntervals.stream()
+                .filter(interval -> overlaps(interval, start, end))
+                .anyMatch(interval -> interval.value() != null && !interval.value().equalsIgnoreCase("NONE"));
+
+        return new HeatRequestState(true, callingForHeat);
+    }
+
+    private boolean overlaps(CallForHeatInterval interval, LocalDateTime start, LocalDateTime end) {
+        if (interval == null || interval.from() == null || interval.to() == null) {
+            return false;
+        }
+
+        return interval.from().isBefore(end) && interval.to().isAfter(start);
+    }
+
+    private boolean resolveManualBoost(List<SettingInterval> settingIntervals, LocalDateTime start, LocalDateTime end) {
+        if (settingIntervals == null || settingIntervals.isEmpty()) {
+            return false;
+        }
+
+        return settingIntervals.stream()
+                .filter(interval -> overlaps(interval, start, end))
+                .map(SettingInterval::value)
+                .anyMatch(value -> value != null && Boolean.TRUE.equals(value.isBoost()));
+    }
+
+    private boolean resolveSunnyState(List<BooleanInterval> sunnyIntervals, LocalDateTime start, LocalDateTime end) {
+        if (sunnyIntervals == null || sunnyIntervals.isEmpty()) {
+            return false;
+        }
+
+        return sunnyIntervals.stream()
+                .filter(interval -> overlaps(interval, start, end))
+                .anyMatch(interval -> Boolean.TRUE.equals(interval.value()));
+    }
+
+    private boolean overlaps(SettingInterval interval, LocalDateTime start, LocalDateTime end) {
+        if (interval == null || interval.from() == null || interval.to() == null) {
+            return false;
+        }
+
+        return interval.from().isBefore(end) && interval.to().isAfter(start);
+    }
+
+    private boolean overlaps(BooleanInterval interval, LocalDateTime start, LocalDateTime end) {
+        if (interval == null || interval.from() == null || interval.to() == null) {
+            return false;
+        }
+
+        return interval.from().isBefore(end) && interval.to().isAfter(start);
     }
 
     private String confidenceLabel(int activeIntervals, int supportingIntervals) {
@@ -228,7 +322,12 @@ public class BoilerRuntimeEstimator {
             boolean hasDemand,
             boolean likelyHeating,
             boolean strongHeating,
-            boolean boostedHeating
+            boolean boostedHeating,
+            boolean heatRequestKnown,
+            boolean callingForHeat
     ) {
+    }
+
+    private record HeatRequestState(boolean known, boolean callingForHeat) {
     }
 }
