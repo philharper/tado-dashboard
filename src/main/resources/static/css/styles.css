@@ -83,6 +83,10 @@ select {
     padding: 16px 0 28px;
 }
 
+.app-shell-wide {
+    width: min(1680px, calc(100vw - 20px));
+}
+
 .auth-shell {
     min-height: 100vh;
     display: grid;
@@ -655,6 +659,106 @@ select {
     gap: 14px;
 }
 
+.schedule-layout {
+    min-height: calc(100vh - 108px);
+}
+
+.schedule-workspace {
+    display: grid;
+    gap: 10px;
+    min-height: 100%;
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    backdrop-filter: blur(18px);
+    box-shadow: var(--shadow);
+}
+
+.schedule-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.schedule-toolbar-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.schedule-heading {
+    margin: 0;
+    font-size: 1.25rem;
+    letter-spacing: -0.04em;
+}
+
+.schedule-caption {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.day-tabs-compact {
+    gap: 6px;
+}
+
+.day-tabs-compact .tab-button {
+    padding: 7px 11px;
+    min-width: 58px;
+}
+
+.day-panel-header-compact {
+    margin-bottom: 8px;
+}
+
+.schedule-card-tight {
+    padding: 8px;
+}
+
+.table-scroll-tall {
+    max-height: calc(100vh - 285px);
+}
+
+.schedule-table-compact {
+    min-width: 1320px;
+}
+
+.schedule-table-compact .room-cell,
+.schedule-table-compact .room-head {
+    min-width: 160px;
+}
+
+.schedule-table-compact .room-cell {
+    padding: 10px 12px;
+}
+
+.schedule-table-compact .schedule-room {
+    margin-bottom: 0;
+    font-size: 0.88rem;
+}
+
+.schedule-table-compact thead th {
+    padding: 8px 8px;
+    font-size: 0.72rem;
+}
+
+.schedule-table-compact td {
+    padding: 6px 4px;
+}
+
+.schedule-table-compact .temp-cell {
+    min-width: 48px;
+}
+
+.schedule-table-compact .temp-pill {
+    min-width: 34px;
+    padding: 5px 6px;
+    font-size: 0.78rem;
+}
+
 @media (max-width: 1100px) {
     .hero {
         grid-template-columns: 1fr;
@@ -675,6 +779,10 @@ select {
     .app-shell,
     .auth-shell {
         width: min(100vw - 20px, 1400px);
+    }
+
+    .app-shell-wide {
+        width: min(100vw - 12px, 1680px);
     }
 
     .app-shell {
@@ -711,6 +819,19 @@ select {
     .toolbar-card,
     .date-form {
         width: 100%;
+    }
+
+    .schedule-workspace,
+    .schedule-toolbar {
+        gap: 12px;
+    }
+
+    .schedule-layout {
+        min-height: auto;
+    }
+
+    .table-scroll-tall {
+        max-height: none;
     }
 
     .field-group,

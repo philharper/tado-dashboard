@@ -6,7 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body class="app-body">
-<div class="app-shell">
+<div class="app-shell app-shell-wide">
     <header class="topbar">
         <div class="brand">
             <span class="brand-mark">Tado Dashboard</span>
@@ -30,94 +30,54 @@
         </div>
     </header>
 
-    <main class="content-stack">
-        <section class="hero">
-            <div class="hero-panel">
-                <div class="eyebrow">Programme View</div>
-                <h1 class="hero-title">Every room. Every hour. One clean grid.</h1>
-                <p class="hero-copy">
-                    Browse the weekly heating plan with sticky room labels and faster day switching.
-                </p>
-                <div class="hero-metrics">
-                    <div class="metric-card">
-                        <span class="metric-value" th:text="${weeklySchedule.heatingSchedule.size()}">7</span>
-                        <span class="stat-label">days mapped</span>
-                    </div>
-                    <div class="metric-card">
-                        <span class="metric-value">Live</span>
-                        <span class="stat-label">room programmes</span>
-                    </div>
-                    <div class="metric-card">
-                        <span class="metric-value">24h</span>
-                        <span class="stat-label">hourly targets</span>
-                    </div>
+    <main class="schedule-layout">
+        <section class="schedule-workspace">
+            <div class="schedule-toolbar">
+                <div>
+                    <h1 class="schedule-heading">Weekly programme</h1>
+                    <p class="schedule-caption">One-day focus, 24-hour grid, room targets visible at a glance.</p>
+                </div>
+                <div class="schedule-toolbar-meta">
+                    <span class="status-pill">24 hour view</span>
+                    <span class="status-pill">Sticky room labels</span>
                 </div>
             </div>
 
-            <aside class="hero-side">
-                <div>
-                    <div class="eyebrow">How To Read</div>
-                    <h2 class="section-title">Dense data, less visual noise.</h2>
-                    <p class="section-copy">
-                        Each row is a room, each column is an hour, and each cell carries the Tado target colour with better contrast.
-                    </p>
-                </div>
-                <div class="zone-summary-grid">
-                    <div class="zone-summary">
-                        <strong>Today-first navigation</strong>
-                        <span class="helper-text">The view opens on the current weekday automatically.</span>
-                    </div>
-                    <div class="zone-summary">
-                        <strong>Sticky headers</strong>
-                        <span class="helper-text">Room names and hourly labels remain visible while scrolling.</span>
-                    </div>
-                </div>
-            </aside>
-        </section>
-
-        <section class="content-panel">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">Weekly programme</h2>
-                    <p class="section-copy">Switch days instantly and scan room-by-room without losing your place.</p>
-                </div>
-                <div class="day-tabs" aria-label="Days of week">
-                    <button class="tab-button" data-day="MONDAY" type="button">Monday</button>
-                    <button class="tab-button" data-day="TUESDAY" type="button">Tuesday</button>
-                    <button class="tab-button" data-day="WEDNESDAY" type="button">Wednesday</button>
-                    <button class="tab-button" data-day="THURSDAY" type="button">Thursday</button>
-                    <button class="tab-button" data-day="FRIDAY" type="button">Friday</button>
-                    <button class="tab-button" data-day="SATURDAY" type="button">Saturday</button>
-                    <button class="tab-button" data-day="SUNDAY" type="button">Sunday</button>
-                </div>
+            <div class="day-tabs day-tabs-compact" aria-label="Days of week">
+                <button class="tab-button" data-day="MONDAY" type="button">Mon</button>
+                <button class="tab-button" data-day="TUESDAY" type="button">Tue</button>
+                <button class="tab-button" data-day="WEDNESDAY" type="button">Wed</button>
+                <button class="tab-button" data-day="THURSDAY" type="button">Thu</button>
+                <button class="tab-button" data-day="FRIDAY" type="button">Fri</button>
+                <button class="tab-button" data-day="SATURDAY" type="button">Sat</button>
+                <button class="tab-button" data-day="SUNDAY" type="button">Sun</button>
             </div>
 
             <section th:each="entry : ${weeklySchedule.heatingSchedule}"
                      th:with="heatingSchedule=${entry.value}"
                      class="day-panel"
                      th:attr="data-day=${entry.key}">
-                <div class="day-panel-header">
+                <div class="day-panel-header day-panel-header-compact">
                     <div>
-                        <h3 class="day-title" th:text="${#strings.capitalize(#strings.toLowerCase(entry.key.toString()))}">Monday</h3>
-                        <p class="table-note">Targets across all 24 hours for every room in the selected programme.</p>
+                        <h2 class="day-title" th:text="${#strings.capitalize(#strings.toLowerCase(entry.key.toString()))}">Monday</h2>
+                        <p class="table-note">Room targets for the selected day.</p>
                     </div>
                     <span class="status-pill" th:text="${#lists.size(heatingSchedule.roomSchedules)} + ' rooms'">0 rooms</span>
                 </div>
 
-                <div class="schedule-card">
-                    <div class="table-scroll">
-                        <table class="schedule-table">
+                <div class="schedule-card schedule-card-tight">
+                    <div class="table-scroll table-scroll-tall">
+                        <table class="schedule-table schedule-table-compact">
                             <thead>
                             <tr>
                                 <th class="room-head">Room</th>
-                                <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${#numbers.formatInteger(hour, 2)} + ':00'">00:00</th>
+                                <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${#numbers.formatInteger(hour, 2)}">00</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:each="roomSchedule : ${heatingSchedule.roomSchedules}">
                                 <td class="room-cell">
                                     <span class="schedule-room" th:text="${roomSchedule.name}">Living Room</span>
-                                    <span class="schedule-sub">Hourly target profile</span>
                                 </td>
                                 <td th:each="hourEntry : ${roomSchedule.hourlyTemperatures}"
                                     th:with="hourlyTemperature=${hourEntry.value}"
