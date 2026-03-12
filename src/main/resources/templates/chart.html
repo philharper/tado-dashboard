@@ -116,6 +116,7 @@
     /*<![CDATA[*/
     const dayReports = /*[[${dayReports}]]*/ {};
     const selectedDate = /*[[${selectedDate}]]*/ "";
+    const boilerRuntimeWindows = /*[[${boilerRuntimeEstimate.windows()}]]*/ [];
     /*]]>*/
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -140,6 +141,47 @@
             "#c6a6ff",
             "#9ff29f"
         ];
+
+        const runtimeWindowPlugin = {
+            id: "runtimeWindowPlugin",
+            beforeDatasetsDraw(chart, args, options) {
+                const windows = options?.windows ?? [];
+                if (!windows.length) {
+                    return;
+                }
+
+                const {ctx, chartArea, scales} = chart;
+                const xScale = scales.x;
+                if (!ctx || !chartArea || !xScale) {
+                    return;
+                }
+
+                ctx.save();
+                for (const window of windows) {
+                    const startIndex = sortedTimestamps.indexOf(window.start);
+                    const endIndex = sortedTimestamps.indexOf(window.end);
+                    if (startIndex === -1) {
+                        continue;
+                    }
+
+                    const startPixel = xScale.getPixelForValue(startIndex);
+                    const endPixel = xScale.getPixelForValue(endIndex === -1 ? sortedTimestamps.length - 1 : endIndex);
+                    const left = Math.max(chartArea.left, Math.min(startPixel, endPixel));
+                    const right = Math.min(chartArea.right, Math.max(startPixel, endPixel));
+
+                    if (right <= left) {
+                        continue;
+                    }
+
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, "rgba(255, 184, 108, 0.18)");
+                    gradient.addColorStop(1, "rgba(255, 184, 108, 0.04)");
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+                }
+                ctx.restore();
+            }
+        };
 
         const zoneEntries = Object.entries(dayReports)
             .map(([zone, report], index) => {
@@ -212,6 +254,7 @@
 
         new Chart(chartCtx, {
             type: "line",
+            plugins: [runtimeWindowPlugin],
             data: {
                 labels: sortedTimestamps.map((timestamp) => timestampFormatter.format(new Date(timestamp))),
                 datasets: datasets
@@ -223,6 +266,9 @@
                     intersect: false
                 },
                 plugins: {
+                    runtimeWindowPlugin: {
+                        windows: boilerRuntimeWindows
+                    },
                     legend: {
                         position: "bottom",
                         labels: {

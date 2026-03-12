@@ -2,6 +2,7 @@ package uk.co.philharper.tadodashboard;
 
 import org.springframework.stereotype.Component;
 import uk.co.philharper.tadodashboard.model.BoilerRuntimeEstimate;
+import uk.co.philharper.tadodashboard.model.BoilerRuntimeWindow;
 import uk.co.philharper.tadodashboard.model.DataPoint;
 import uk.co.philharper.tadodashboard.model.Day;
 import uk.co.philharper.tadodashboard.model.DayReport;
@@ -29,7 +30,7 @@ public class BoilerRuntimeEstimator {
         List<RoomIntervalSignal> roomSignals = buildRoomSignals(dayReports, targetsByRoom);
 
         if (roomSignals.isEmpty()) {
-            return new BoilerRuntimeEstimate(0, 0, 0, 0, "Low");
+            return new BoilerRuntimeEstimate(0, 0, 0, 0, "Low", List.of());
         }
 
         TreeSet<LocalDateTime> boundaries = new TreeSet<>();
@@ -44,6 +45,8 @@ public class BoilerRuntimeEstimator {
         int activeIntervals = 0;
         int observedIntervals = 0;
         int supportingIntervals = 0;
+        List<BoilerRuntimeWindow> windows = new ArrayList<>();
+        LocalDateTime currentWindowStart = null;
 
         for (int index = 0; index < boundaryList.size() - 1; index++) {
             LocalDateTime start = boundaryList.get(index);
@@ -89,9 +92,19 @@ public class BoilerRuntimeEstimator {
             boilerOn = intervalOn;
 
             if (intervalOn) {
+                if (currentWindowStart == null) {
+                    currentWindowStart = start;
+                }
                 totalMinutes += minutes;
                 activeIntervals++;
+            } else if (currentWindowStart != null) {
+                windows.add(new BoilerRuntimeWindow(currentWindowStart, start));
+                currentWindowStart = null;
             }
+        }
+
+        if (currentWindowStart != null && boundaryList.size() > 1) {
+            windows.add(new BoilerRuntimeWindow(currentWindowStart, boundaryList.get(boundaryList.size() - 1)));
         }
 
         return new BoilerRuntimeEstimate(
@@ -99,7 +112,8 @@ public class BoilerRuntimeEstimator {
                 activeIntervals,
                 observedIntervals,
                 supportingIntervals,
-                confidenceLabel(activeIntervals, supportingIntervals)
+                confidenceLabel(activeIntervals, supportingIntervals),
+                windows
         );
     }
 
