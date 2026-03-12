@@ -31,7 +31,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "build/libs/.jar"
+          source: "build/libs/*.jar"
           target: "/srv/apps/tado-dashboard"
           strip_components: 2
 
@@ -42,5 +42,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            mv /srv/apps/tado-dashboard/.jar /srv/apps/tado-dashboard/app.jar
+            mv /srv/apps/tado-dashboard/*.jar /srv/apps/tado-dashboard/app.jar
             systemctl restart tado-dashboard
