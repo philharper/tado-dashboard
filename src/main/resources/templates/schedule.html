@@ -11,7 +11,7 @@
         <div class="brand">
             <span class="brand-mark">Tado Dashboard</span>
             <span class="brand-title">Heating schedule</span>
-            <span class="brand-subtitle" th:text="${userInfo.homes[0].name} + ' home overview'"></span>
+            <span class="brand-subtitle" th:text="${homeName} + ' home overview'"></span>
         </div>
         <div class="topbar-actions">
             <nav class="nav-pills" aria-label="Primary">
@@ -103,7 +103,7 @@
                         <h3 class="day-title" th:text="${#strings.capitalize(#strings.toLowerCase(entry.key.toString()))}">Monday</h3>
                         <p class="table-note">Targets across all 24 hours for every room in the selected programme.</p>
                     </div>
-                    <span class="status-pill" th:text="${heatingSchedule.roomSchedules.size()} + ' rooms'">0 rooms</span>
+                    <span class="status-pill" th:text="${#lists.size(heatingSchedule.roomSchedules)} + ' rooms'">0 rooms</span>
                 </div>
 
                 <div class="schedule-card">
@@ -112,7 +112,7 @@
                             <thead>
                             <tr>
                                 <th class="room-head">Room</th>
-                                <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${#strings.format('%02d:00', hour)}">00:00</th>
+                                <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${#numbers.formatInteger(hour, 2)} + ':00'">00:00</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -124,7 +124,7 @@
                                 <td th:each="hourEntry : ${roomSchedule.hourlyTemperatures}"
                                     th:with="hourlyTemperature=${hourEntry.value}"
                                     class="temp-cell"
-                                    th:style="'--cell-color:' + ${hourlyTemperature.colour}">
+                                    th:style="|--cell-color:${hourlyTemperature.colour}|">
                                     <span class="temp-pill" th:text="${hourlyTemperature.temperature}">20</span>
                                 </td>
                             </tr>

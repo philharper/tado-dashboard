@@ -35,6 +35,7 @@ public class TadoController {
         var userInfo = tadoService.getUserInfo();
 
         var homeId = userInfo.homes().get(0).id();
+        var homeName = userInfo.homes().get(0).name();
 
         tadoService.getZones(homeId).forEach(zone -> {
             var zoneId = zone.id();
@@ -46,6 +47,7 @@ public class TadoController {
         var weeklySchedule = HeatingScheduleMapper.mapRoomsToHeatingSchedule(roomBlocks);
 
         model.addAttribute("userInfo", userInfo);
+        model.addAttribute("homeName", homeName);
         model.addAttribute("weeklySchedule", weeklySchedule);
 
         return "schedule";
@@ -67,6 +69,7 @@ public class TadoController {
 
         var userInfo = tadoService.getUserInfo();
         var homeId = userInfo.homes().get(0).id();
+        var homeName = userInfo.homes().get(0).name();
 
         tadoService.getZones(homeId).forEach(zone -> {
             var zoneId = zone.id();
@@ -77,6 +80,7 @@ public class TadoController {
         });
 
         model.addAttribute("userInfo", userInfo);
+        model.addAttribute("homeName", homeName);
         model.addAttribute("dayReports", dayReports);
         model.addAttribute("selectedDate", selectedDate.toLocalDate().toString());
 
@@ -84,4 +88,3 @@ public class TadoController {
     }
 
 }
-
