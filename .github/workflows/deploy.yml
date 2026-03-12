@@ -17,9 +17,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '23'
+          cache: gradle
 
       - name: Build application
         run: ./gradlew bootJar -x test
+
+      - name: Show build output (debug)
+        run: ls -R build
 
       - name: Copy JAR to server
         uses: appleboy/scp-action@v0.1.7
@@ -27,8 +31,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "target/*.jar"
+          source: "build/libs/.jar"
           target: "/srv/apps/tado-dashboard"
+          strip_components: 2
 
       - name: Restart service
         uses: appleboy/ssh-action@v1.0.3
@@ -37,5 +42,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            mv /srv/apps/tado-dashboard/target/*.jar /srv/apps/tado-dashboard/app.jar
-            systemctl restart nhs-scheduler
+            mv /srv/apps/tado-dashboard/.jar /srv/apps/tado-dashboard/app.jar
+            systemctl restart tado-dashboard
