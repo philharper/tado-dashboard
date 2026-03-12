@@ -24,6 +24,8 @@ public class BoilerRuntimeEstimator {
 
     private static final int MAX_INTERVAL_MINUTES = 45;
     private static final int MIN_INTERVAL_MINUTES = 3;
+    private static final double BASE_RISE_PER_HOUR = 0.12;
+    private static final double BOOST_RISE_PER_HOUR = 0.45;
 
     public BoilerRuntimeEstimate estimate(Map<String, DayReport> dayReports, WeeklySchedule weeklySchedule, Day day) {
         Map<String, Map<Integer, Double>> targetsByRoom = buildTargetsByRoom(weeklySchedule, day);
@@ -70,6 +72,7 @@ public class BoilerRuntimeEstimator {
             long demandingRooms = activeSignals.stream().filter(RoomIntervalSignal::hasDemand).count();
             long heatingRooms = activeSignals.stream().filter(RoomIntervalSignal::likelyHeating).count();
             long strongRooms = activeSignals.stream().filter(RoomIntervalSignal::strongHeating).count();
+            long boostedRooms = activeSignals.stream().filter(RoomIntervalSignal::boostedHeating).count();
 
             double aggregateEvidence = activeSignals.stream()
                     .map(RoomIntervalSignal::evidence)
@@ -80,10 +83,12 @@ public class BoilerRuntimeEstimator {
 
             boolean intervalSupported = (heatingRooms >= 2)
                     || (strongRooms >= 1 && demandingRooms >= 2)
+                    || (boostedRooms >= 2)
+                    || (boostedRooms >= 1 && heatingRooms >= 1)
                     || aggregateEvidence >= 1.45;
 
             boolean intervalOn = intervalSupported
-                    || (boilerOn && demandingRooms >= 2 && aggregateEvidence >= 0.95);
+                    || (boilerOn && (demandingRooms >= 2 || boostedRooms >= 1) && aggregateEvidence >= 0.95);
 
             if (intervalSupported) {
                 supportingIntervals++;
@@ -156,27 +161,29 @@ public class BoilerRuntimeEstimator {
                 double currentTemp = current.value().celsius();
                 double previousTemp = previous.value().celsius();
                 Double target = hourlyTargets.get(current.timestamp().getHour());
-                if (target == null) {
-                    continue;
-                }
-
-                double tempGap = target - currentTemp;
-                if (tempGap <= 0.15) {
-                    continue;
-                }
-
                 double slopePerHour = ((currentTemp - previousTemp) / minutes) * 60.0;
-                double demandScore = clamp(tempGap / 1.8);
-                double riseScore = clamp((slopePerHour - 0.12) / 0.9);
-                double evidence = (demandScore * 0.7) + (riseScore * 0.3);
+                double tempGap = target == null ? 0.0 : target - currentTemp;
+                double demandScore = tempGap <= 0.0 ? 0.0 : clamp(tempGap / 1.8);
+                double riseScore = clamp((slopePerHour - BASE_RISE_PER_HOUR) / 0.9);
+                boolean boostedHeating = slopePerHour >= BOOST_RISE_PER_HOUR && (currentTemp - previousTemp) >= 0.08;
+
+                if (demandScore == 0.0 && !boostedHeating) {
+                    continue;
+                }
+
+                double evidence = Math.max(
+                        (demandScore * 0.7) + (riseScore * 0.3),
+                        boostedHeating ? 0.78 + (riseScore * 0.22) : 0.0
+                );
 
                 signals.add(new RoomIntervalSignal(
                         previous.timestamp(),
                         current.timestamp(),
                         evidence,
-                        demandScore >= 0.45,
-                        demandScore >= 0.45 && riseScore >= 0.18,
-                        demandScore >= 0.65 && riseScore >= 0.32
+                        demandScore >= 0.35 || boostedHeating,
+                        (demandScore >= 0.35 && riseScore >= 0.12) || boostedHeating,
+                        (demandScore >= 0.6 && riseScore >= 0.26) || slopePerHour >= 0.7,
+                        boostedHeating
                 ));
             }
         });
@@ -214,6 +221,14 @@ public class BoilerRuntimeEstimator {
         return "Low";
     }
 
-    private record RoomIntervalSignal(LocalDateTime start, LocalDateTime end, double evidence, boolean hasDemand, boolean likelyHeating, boolean strongHeating) {
+    private record RoomIntervalSignal(
+            LocalDateTime start,
+            LocalDateTime end,
+            double evidence,
+            boolean hasDemand,
+            boolean likelyHeating,
+            boolean strongHeating,
+            boolean boostedHeating
+    ) {
     }
 }
