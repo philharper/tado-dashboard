@@ -32,7 +32,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "build/libs/*.jar"
-          target: "/srv/apps/tado-dashboard"
+          target: "/srv/apps/tado"
 
       - name: Restart service
         uses: appleboy/ssh-action@v1.0.3
@@ -41,5 +41,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            mv /srv/apps/tado-dashboard/*.jar /srv/apps/tado/app.jar
+            mv /srv/apps/tado/*.jar /srv/apps/tado/app.jar
             systemctl restart tado
