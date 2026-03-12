@@ -19,7 +19,7 @@ jobs:
           java-version: '21'
 
       - name: Build application
-        run: mvn -B package -DskipTests
+        run: ./gradlew bootJar -x test
 
       - name: Copy JAR to server
         uses: appleboy/scp-action@v0.1.7
