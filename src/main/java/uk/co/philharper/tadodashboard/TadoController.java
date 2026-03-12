@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.co.philharper.tadodashboard.model.DayReport;
+import uk.co.philharper.tadodashboard.model.Day;
 import uk.co.philharper.tadodashboard.model.Room;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,9 @@ public class TadoController {
 
     @Autowired
     private HttpSession session;
+
+    @Autowired
+    private BoilerRuntimeEstimator boilerRuntimeEstimator;
 
     @GetMapping("/schedule")
     public String getSchedules(Model model) {
@@ -66,6 +70,7 @@ public class TadoController {
         LocalDateTime selectedDate = LocalDateTime.parse(date + "T00:00:00");
 
         Map<String, DayReport> dayReports = new HashMap<>();
+        Map<String, Room> roomBlocks = new HashMap<>();
 
         var userInfo = tadoService.getUserInfo();
         var homeId = userInfo.homes().get(0).id();
@@ -75,14 +80,22 @@ public class TadoController {
             var zoneId = zone.id();
 
             if (!zone.name().equals("Hot Water")) {
+                var timetable = tadoService.getActiveTimetable(homeId, zoneId);
+                var blocks = tadoService.getBlocks(homeId, zoneId, timetable.id());
+                roomBlocks.put(zone.name(), new Room(timetable.type(), blocks));
                 dayReports.put(zone.name(), tadoService.getDayReport(homeId, zoneId, selectedDate.toLocalDate().toString()));
             }
         });
+
+        var weeklySchedule = HeatingScheduleMapper.mapRoomsToHeatingSchedule(roomBlocks);
+        var estimateDay = Day.valueOf(selectedDate.getDayOfWeek().name());
+        var boilerRuntimeEstimate = boilerRuntimeEstimator.estimate(dayReports, weeklySchedule, estimateDay);
 
         model.addAttribute("userInfo", userInfo);
         model.addAttribute("homeName", homeName);
         model.addAttribute("dayReports", dayReports);
         model.addAttribute("selectedDate", selectedDate.toLocalDate().toString());
+        model.addAttribute("boilerRuntimeEstimate", boilerRuntimeEstimate);
 
         return "chart";
     }

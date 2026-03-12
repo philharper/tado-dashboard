@@ -45,12 +45,20 @@
                         <span class="stat-label">selected day</span>
                     </div>
                     <div class="metric-card">
+                        <span class="metric-value" th:text="${boilerRuntimeEstimate.totalMinutes()} + ' min'">0 min</span>
+                        <span class="stat-label">estimated boiler runtime</span>
+                    </div>
+                    <div class="metric-card">
                         <span class="metric-value" id="zonesCount">0</span>
                         <span class="stat-label">zones plotted</span>
                     </div>
                     <div class="metric-card">
                         <span class="metric-value" id="overallRange">--</span>
                         <span class="stat-label">temperature range</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value" th:text="${boilerRuntimeEstimate.confidenceLabel()}">Low</span>
+                        <span class="stat-label">estimate confidence</span>
                     </div>
                 </div>
             </div>
@@ -65,12 +73,12 @@
                 </div>
                 <div class="zone-summary-grid">
                     <div class="zone-summary">
-                        <strong>Consistent palette</strong>
-                        <span class="helper-text">Each room keeps a stable colour assignment within the chart.</span>
+                        <strong>Boiler runtime estimate</strong>
+                        <span class="helper-text">Uses overlapping room demand and measured warming to estimate total on-time.</span>
                     </div>
                     <div class="zone-summary">
-                        <strong>Better hover detail</strong>
-                        <span class="helper-text">Tooltips show exact times and temperatures across all active series.</span>
+                        <strong th:text="${boilerRuntimeEstimate.supportingIntervals()} + ' supported windows'">0 supported windows</strong>
+                        <span class="helper-text">Conservative by design, so single-room solar gains should be ignored more often than not.</span>
                     </div>
                 </div>
             </aside>
