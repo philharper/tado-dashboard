@@ -8,7 +8,6 @@ tado:
     oauth_url: https://login.tado.com
     base-url: https://my.tado.com/api/v2
     client-id: ${TADO_CLIENT_ID}
-    client-secret: ${TADO_CLIENT_SECRET}
 
 
 server:

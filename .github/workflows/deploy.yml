@@ -43,4 +43,11 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             install -m 0644 /srv/apps/tado/build/libs/tado-dashboard-0.0.1-SNAPSHOT.jar /srv/apps/tado/app.jar
+            mkdir -p /etc/systemd/system/tado.service.d
+            cat > /etc/systemd/system/tado.service.d/override.conf <<'EOF'
+            [Service]
+            Environment="TADO_CLIENT_ID=${{ secrets.TADO_CLIENT_ID }}"
+            Environment="TADO_CLIENT_SECRET=${{ secrets.TADO_CLIENT_SECRET }}"
+            EOF
+            systemctl daemon-reload
             systemctl restart tado

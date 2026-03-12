@@ -19,9 +19,6 @@ public class TadoService {
     @Value("${tado.api.client-id}")
     private String clientId;
 
-    @Value("${tado.api.client-secret}")
-    private String clientSecret;
-
     @Autowired
     private TadoClient tadoClient;
 
