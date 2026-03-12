@@ -1,191 +1,282 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Temperature Chart</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-            line-height: 1.6;
-        }
-        h1 {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 24px;
-            color: #444;
-        }
-        .nav-links {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .nav-links a {
-            padding: 10px 20px;
-            text-decoration: none;
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            margin: 5px;
-        }
-        .nav-links a:hover {
-            background-color: #f1f1f1;
-        }
-        .chart-container {
-            width: 80%;
-            margin: 40px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .date-picker-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .date-picker-container label {
-            font-size: 16px;
-            margin-right: 10px;
-        }
-        .date-picker-container input[type="date"] {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .date-picker-container input[type="date"]:focus {
-            border-color: #4CAF50;
-        }
-        .date-picker-container button {
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .date-picker-container button:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <title>Temperature Trends</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-<h1>Temperature Chart</h1>
+<body class="app-body">
+<div class="app-shell">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark">Tado Dashboard</span>
+            <span class="brand-title">Temperature trends</span>
+            <span class="brand-subtitle" th:text="${userInfo.homes[0].name} + ' room history'"></span>
+        </div>
+        <div class="topbar-actions">
+            <nav class="nav-pills" aria-label="Primary">
+                <a class="nav-link" th:href="@{/schedule}">Schedule</a>
+                <a class="nav-link active" th:href="@{/chart}">Temperature</a>
+            </nav>
+            <div class="user-pill">
+                <div>
+                    <strong th:text="${userInfo.name}">User</strong>
+                    <span class="meta-text">Live daily room reports</span>
+                </div>
+            </div>
+            <form class="signout-form" th:action="@{/signout}" method="post">
+                <button class="ghost-button" type="submit">Sign Out</button>
+            </form>
+        </div>
+    </header>
 
-<div class="nav-links">
-    <a href="/schedule">Schedule</a>
-    <a href="/chart">Temperature Chart</a>
+    <main class="content-stack">
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Daily Analytics</div>
+                <h1 class="hero-title">Sharper room trends without the chart chaos.</h1>
+                <p class="hero-copy">
+                    Stable colours, aligned timestamps, cleaner tooltips, and faster comparison across zones.
+                    Pick any date and inspect how each room moved through the day.
+                </p>
+                <div class="chart-metrics" id="chart-metrics">
+                    <div class="metric-card">
+                        <span class="metric-value" th:text="${selectedDate}">2026-03-12</span>
+                        <span class="stat-label">selected day</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value" id="zonesCount">0</span>
+                        <span class="stat-label">zones plotted</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value" id="overallRange">--</span>
+                        <span class="stat-label">temperature range</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="hero-side">
+                <div>
+                    <div class="eyebrow">Chart Controls</div>
+                    <h2 class="section-title">Compare a single day cleanly.</h2>
+                    <p class="section-copy">
+                        Data is aligned to actual timestamps before plotting, so lines no longer drift or mismatch
+                        when rooms report at slightly different moments.
+                    </p>
+                </div>
+                <div class="zone-summary-grid">
+                    <div class="zone-summary">
+                        <strong>Consistent palette</strong>
+                        <span class="helper-text">Each room keeps a stable colour assignment within the chart.</span>
+                    </div>
+                    <div class="zone-summary">
+                        <strong>Better hover detail</strong>
+                        <span class="helper-text">Tooltips show exact times and temperatures across all active series.</span>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="toolbar">
+            <div class="toolbar-card">
+                <form class="date-form" method="get" th:action="@{/chart}">
+                    <div class="field-group">
+                        <label class="field-label" for="date">Report date</label>
+                        <input class="field-input" type="date" id="date" name="date" th:value="${selectedDate}">
+                    </div>
+                    <button class="primary-button" type="submit">Refresh view</button>
+                </form>
+            </div>
+            <a class="secondary-button" th:href="@{/schedule}">Open schedule grid</a>
+        </section>
+
+        <section class="chart-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Measured inside temperature</h2>
+                    <p class="section-copy">Hover for exact values or scan the summary cards below for each room.</p>
+                </div>
+            </div>
+            <div class="chart-stage" id="chartStage">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <div class="zone-summary-grid" id="zoneSummaryGrid"></div>
+        </section>
+    </main>
 </div>
 
-<div class="date-picker-container">
-    <form method="get" action="/chart">
-        <label for="date">Select Date: </label>
-        <input type="date" id="date" name="date">
-        <button type="submit">Show Chart</button>
-    </form>
-</div>
-
-<div class="chart-container">
-    <canvas id="temperatureChart"></canvas>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const dateParam = urlParams.get('date');
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('date').value = dateParam ? dateParam : today;
-    });
-</script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    var dayReports = /*[[${dayReports}]]*/ {};
-    console.log("DayReports:", dayReports);
+    const dayReports = /*[[${dayReports}]]*/ {};
+    const selectedDate = /*[[${selectedDate}]]*/ "";
     /*]]>*/
 
     document.addEventListener("DOMContentLoaded", function () {
-        if (!dayReports || Object.keys(dayReports).length === 0) {
-            console.warn("No temperature data available.");
-            return;
-        }
-
-        const zoneNames = Object.keys(dayReports);
-        const datasets = [];
-        let allTimestamps = new Set();
-
-        zoneNames.forEach(zone => {
-            const report = dayReports[zone];
-            if (!report.measuredData || !report.measuredData.insideTemperature || !report.measuredData.insideTemperature.dataPoints) {
-                console.warn(`No data available for zone: ${zone}`);
-                return;
-            }
-
-            const dataPoints = report.measuredData.insideTemperature.dataPoints;
-            const timestamps = dataPoints.map(dp => new Date(dp.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-            const temperatures = dataPoints.map(dp => dp.value.celsius);
-
-            // Store timestamps for alignment
-            timestamps.forEach(t => allTimestamps.add(t));
-
-            // Create dataset for each zone
-            datasets.push({
-                label: zone,
-                data: temperatures,
-                borderColor: getRandomColor(),
-                backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                borderWidth: 2,
-                pointRadius: 4,
-                pointBackgroundColor: '#4CAF50'
-            });
+        const chartStage = document.getElementById("chartStage");
+        const zonesCount = document.getElementById("zonesCount");
+        const overallRange = document.getElementById("overallRange");
+        const zoneSummaryGrid = document.getElementById("zoneSummaryGrid");
+        const canvas = document.getElementById("temperatureChart");
+        const chartCtx = canvas.getContext("2d");
+        const timestampFormatter = new Intl.DateTimeFormat("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit"
         });
 
-        if (datasets.length === 0) {
-            console.warn("No valid datasets to display.");
+        const palette = [
+            "#59d7c4",
+            "#ffb86c",
+            "#8fb4ff",
+            "#ff7f8d",
+            "#f4ef79",
+            "#7fe7ff",
+            "#c6a6ff",
+            "#9ff29f"
+        ];
+
+        const zoneEntries = Object.entries(dayReports)
+            .map(([zone, report], index) => {
+                const dataPoints = report?.measuredData?.insideTemperature?.dataPoints ?? [];
+                const cleanedPoints = dataPoints
+                    .filter((point) => point?.timestamp && point?.value?.celsius !== undefined && point?.value?.celsius !== null)
+                    .map((point) => ({
+                        timestamp: point.timestamp,
+                        celsius: Number(point.value.celsius)
+                    }))
+                    .sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp));
+
+                return {
+                    zone,
+                    color: palette[index % palette.length],
+                    points: cleanedPoints
+                };
+            })
+            .filter((entry) => entry.points.length > 0);
+
+        if (zoneEntries.length === 0) {
+            chartStage.innerHTML = '<div class="empty-state"><div><strong>No temperature data available</strong><p>Pick another day or wait for new reports to sync from Tado.</p></div></div>';
+            zonesCount.textContent = "0";
+            overallRange.textContent = "--";
             return;
         }
 
-        // Sort timestamps
-        const sortedTimestamps = Array.from(allTimestamps).sort();
+        const sortedTimestamps = Array.from(new Set(
+            zoneEntries.flatMap((entry) => entry.points.map((point) => point.timestamp))
+        )).sort((left, right) => new Date(left) - new Date(right));
 
-        // Create Chart
-        const ctx = document.getElementById('temperatureChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
+        const allTemperatures = zoneEntries.flatMap((entry) => entry.points.map((point) => point.celsius));
+        const minTemp = Math.min(...allTemperatures);
+        const maxTemp = Math.max(...allTemperatures);
+
+        zonesCount.textContent = String(zoneEntries.length);
+        overallRange.textContent = `${minTemp.toFixed(1)}-${maxTemp.toFixed(1)}°C`;
+
+        zoneEntries.forEach((entry) => {
+            const latestPoint = entry.points[entry.points.length - 1];
+            const localMin = Math.min(...entry.points.map((point) => point.celsius));
+            const localMax = Math.max(...entry.points.map((point) => point.celsius));
+
+            const summary = document.createElement("article");
+            summary.className = "zone-summary";
+            summary.innerHTML = `
+                <strong>${entry.zone}</strong>
+                <span class="helper-text">Latest ${latestPoint.celsius.toFixed(1)}°C at ${timestampFormatter.format(new Date(latestPoint.timestamp))}</span>
+                <span class="helper-text">Range ${localMin.toFixed(1)}°C to ${localMax.toFixed(1)}°C</span>
+            `;
+            zoneSummaryGrid.appendChild(summary);
+        });
+
+        const datasets = zoneEntries.map((entry) => {
+            const pointMap = new Map(entry.points.map((point) => [point.timestamp, point.celsius]));
+            return {
+                label: entry.zone,
+                data: sortedTimestamps.map((timestamp) => pointMap.get(timestamp) ?? null),
+                borderColor: entry.color,
+                backgroundColor: `${entry.color}22`,
+                borderWidth: 3,
+                tension: 0.34,
+                spanGaps: true,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHitRadius: 14,
+                fill: false
+            };
+        });
+
+        new Chart(chartCtx, {
+            type: "line",
             data: {
-                labels: sortedTimestamps,
+                labels: sortedTimestamps.map((timestamp) => timestampFormatter.format(new Date(timestamp))),
                 datasets: datasets
             },
             options: {
-                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            color: "#f3f7ff",
+                            usePointStyle: true,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgba(6, 17, 33, 0.94)",
+                        borderColor: "rgba(255, 255, 255, 0.08)",
+                        borderWidth: 1,
+                        titleColor: "#f3f7ff",
+                        bodyColor: "#d9e5ff",
+                        padding: 14,
+                        callbacks: {
+                            title: function (items) {
+                                const index = items[0].dataIndex;
+                                return `${selectedDate} ${timestampFormatter.format(new Date(sortedTimestamps[index]))}`;
+                            },
+                            label: function (context) {
+                                if (context.parsed.y === null) {
+                                    return `${context.dataset.label}: no reading`;
+                                }
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}°C`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: {
-                        title: {
-                            display: true,
-                            text: 'Time'
+                        ticks: {
+                            color: "#94a7c6",
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 12
+                        },
+                        grid: {
+                            color: "rgba(255, 255, 255, 0.06)"
                         }
                     },
                     y: {
-                        title: {
-                            display: true,
-                            text: 'Temperature (°C)'
+                        suggestedMin: Math.floor(minTemp - 1),
+                        suggestedMax: Math.ceil(maxTemp + 1),
+                        ticks: {
+                            color: "#94a7c6",
+                            callback: function (value) {
+                                return `${value}°`;
+                            }
+                        },
+                        grid: {
+                            color: "rgba(255, 255, 255, 0.08)"
                         }
                     }
                 }
             }
         });
-
-        function getRandomColor() {
-            return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
-        }
     });
 </script>
-
 </body>
 </html>

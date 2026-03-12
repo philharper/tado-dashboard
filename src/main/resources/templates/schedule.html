@@ -2,184 +2,159 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Heating Schedule</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-            line-height: 1.6;
-        }
-        h1 {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 24px;
-            color: #444;
-        }
-        h2 {
-            text-align: center;
-        }
-        .nav-links {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .nav-links a {
-            padding: 10px 20px;
-            text-decoration: none;
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            margin: 5px;
-        }
-        .nav-links a:hover {
-            background-color: #f1f1f1;
-        }
-        .tabs {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: transparent;
-            color: #4CAF50;
-            border: 1px solid #4CAF50;
-            outline: none;
-            transition: background-color 0.3s;
-        }
-        .tab:hover {
-            background-color: #f1f1f1;
-        }
-        .tab.active {
-            background-color: #e0e0e0;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: center;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f4f4f4;
-        }
-        tr:hover {
-            background-color: #e0f7fa;
-        }
-        td {
-            border-bottom: 1px solid #ddd;
-        }
-        td:first-child {
-            text-align: left;
-        }
-        @media (max-width: 768px) {
-            table {
-                width: 100%;
-            }
-            th, td {
-                font-size: 14px;
-                padding: 10px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body>
-<h1>Heating Schedule</h1>
+<body class="app-body">
+<div class="app-shell">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark">Tado Dashboard</span>
+            <span class="brand-title">Heating schedule</span>
+            <span class="brand-subtitle" th:text="${userInfo.homes[0].name} + ' home overview'"></span>
+        </div>
+        <div class="topbar-actions">
+            <nav class="nav-pills" aria-label="Primary">
+                <a class="nav-link active" th:href="@{/schedule}">Schedule</a>
+                <a class="nav-link" th:href="@{/chart}">Temperature</a>
+            </nav>
+            <div class="user-pill">
+                <div>
+                    <strong th:text="${userInfo.name}">User</strong>
+                    <span class="meta-text">Connected to Tado cloud</span>
+                </div>
+            </div>
+            <form class="signout-form" th:action="@{/signout}" method="post">
+                <button class="ghost-button" type="submit">Sign Out</button>
+            </form>
+        </div>
+    </header>
 
-<div class="nav-links">
-    <a href="/schedule">Schedule</a>
-    <a href="/chart">Temperature Chart</a>
+    <main class="content-stack">
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Programme View</div>
+                <h1 class="hero-title">Every room. Every hour. One clean grid.</h1>
+                <p class="hero-copy">
+                    Browse the full weekly heating plan with sticky room labels, a clearer hourly rhythm,
+                    and faster day switching focused on the schedule you actually need right now.
+                </p>
+                <div class="hero-metrics">
+                    <div class="metric-card">
+                        <span class="metric-value" th:text="${weeklySchedule.heatingSchedule.size()}">7</span>
+                        <span class="stat-label">days mapped</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">Live</span>
+                        <span class="stat-label">room programmes</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">24h</span>
+                        <span class="stat-label">hourly targets</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="hero-side">
+                <div>
+                    <div class="eyebrow">How To Read</div>
+                    <h2 class="section-title">Dense data, less visual noise.</h2>
+                    <p class="section-copy">
+                        Each row is a room, each column is an hour, and each cell carries the target temperature
+                        colour from Tado with better contrast and stickier context.
+                    </p>
+                </div>
+                <div class="zone-summary-grid">
+                    <div class="zone-summary">
+                        <strong>Today-first navigation</strong>
+                        <span class="helper-text">The view opens on the current weekday automatically.</span>
+                    </div>
+                    <div class="zone-summary">
+                        <strong>Sticky headers</strong>
+                        <span class="helper-text">Room names and hourly labels remain visible while scrolling.</span>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="content-panel">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Weekly programme</h2>
+                    <p class="section-copy">Switch days instantly and scan room-by-room without losing your place.</p>
+                </div>
+                <div class="day-tabs" aria-label="Days of week">
+                    <button class="tab-button" data-day="MONDAY" type="button">Monday</button>
+                    <button class="tab-button" data-day="TUESDAY" type="button">Tuesday</button>
+                    <button class="tab-button" data-day="WEDNESDAY" type="button">Wednesday</button>
+                    <button class="tab-button" data-day="THURSDAY" type="button">Thursday</button>
+                    <button class="tab-button" data-day="FRIDAY" type="button">Friday</button>
+                    <button class="tab-button" data-day="SATURDAY" type="button">Saturday</button>
+                    <button class="tab-button" data-day="SUNDAY" type="button">Sunday</button>
+                </div>
+            </div>
+
+            <section th:each="entry : ${weeklySchedule.heatingSchedule}"
+                     th:with="heatingSchedule=${entry.value}"
+                     class="day-panel"
+                     th:attr="data-day=${entry.key}">
+                <div class="day-panel-header">
+                    <div>
+                        <h3 class="day-title" th:text="${#strings.capitalize(#strings.toLowerCase(entry.key.toString()))}">Monday</h3>
+                        <p class="table-note">Targets across all 24 hours for every room in the selected programme.</p>
+                    </div>
+                    <span class="status-pill" th:text="${heatingSchedule.roomSchedules.size()} + ' rooms'">0 rooms</span>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="table-scroll">
+                        <table class="schedule-table">
+                            <thead>
+                            <tr>
+                                <th class="room-head">Room</th>
+                                <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${#strings.format('%02d:00', hour)}">00:00</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="roomSchedule : ${heatingSchedule.roomSchedules}">
+                                <td class="room-cell">
+                                    <span class="schedule-room" th:text="${roomSchedule.name}">Living Room</span>
+                                    <span class="schedule-sub">Hourly target profile</span>
+                                </td>
+                                <td th:each="hourEntry : ${roomSchedule.hourlyTemperatures}"
+                                    th:with="hourlyTemperature=${hourEntry.value}"
+                                    class="temp-cell"
+                                    th:style="'--cell-color:' + ${hourlyTemperature.colour}">
+                                    <span class="temp-pill" th:text="${hourlyTemperature.temperature}">20</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
 </div>
-
-<div class="tabs">
-    <button class="tab active" onclick="showTab('MONDAY')">Monday</button>
-    <button class="tab" onclick="showTab('TUESDAY')">Tuesday</button>
-    <button class="tab" onclick="showTab('WEDNESDAY')">Wednesday</button>
-    <button class="tab" onclick="showTab('THURSDAY')">Thursday</button>
-    <button class="tab" onclick="showTab('FRIDAY')">Friday</button>
-    <button class="tab" onclick="showTab('SATURDAY')">Saturday</button>
-    <button class="tab" onclick="showTab('SUNDAY')">Sunday</button>
-</div>
-
-<div th:each="entry : ${weeklySchedule.heatingSchedule}" th:with="heatingSchedule=${entry.value}" class="tab-content" th:id="${entry.key}" th:classappend="${entry.key == 'MONDAY' ? ' active' : ''}">
-    <h2 th:text="${entry.key}"></h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Room</th>
-            <th th:each="hour : ${#numbers.sequence(0, 23)}" th:text="${hour}"></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="roomSchedule : ${heatingSchedule.roomSchedules}">
-            <td th:text="${roomSchedule.name}"></td>
-            <td th:each="entry : ${roomSchedule.hourlyTemperatures}" th:with="hourlyTemperature=${entry.value}"
-                th:text="${hourlyTemperature.temperature}"
-                th:bgcolor="${hourlyTemperature.colour}"></td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-
-<form th:action="@{/signout}" method="post">
-    <button type="submit" class="signout-button">Sign Out</button>
-</form>
 
 <script>
-    function showTab(day) {
-        var tabs = document.querySelectorAll('.tab');
-        var contents = document.querySelectorAll('.tab-content');
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabs = Array.from(document.querySelectorAll(".tab-button"));
+        const panels = Array.from(document.querySelectorAll(".day-panel"));
 
-        tabs.forEach(function(tab) {
-            tab.classList.remove('active');
+        function activateDay(day) {
+            tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.day === day));
+            panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.day === day));
+        }
+
+        tabs.forEach((tab) => {
+            tab.addEventListener("click", () => activateDay(tab.dataset.day));
         });
 
-        contents.forEach(function(content) {
-            content.classList.remove('active');
-        });
-
-        document.querySelector('.tab[onclick="showTab(\'' + day + '\')"]').classList.add('active');
-        document.getElementById(day).classList.add('active');
-    }
-
-    function getCurrentDayAsText() {
-        const daysOfWeek = [
-            "SUNDAY",
-            "MONDAY",
-            "TUESDAY",
-            "WEDNESDAY",
-            "THURSDAY",
-            "FRIDAY",
-            "SATURDAY"
-        ];
-        const currentDayIndex = new Date().getDay(); // Get the current day index (0 = Sunday, 6 = Saturday)
-        return daysOfWeek[currentDayIndex];
-    }
-
-    window.onload = function() {
-        showTab(getCurrentDayAsText());
-    };
+        const currentDay = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"][new Date().getDay()];
+        const availableDay = tabs.some((tab) => tab.dataset.day === currentDay) ? currentDay : "MONDAY";
+        activateDay(availableDay);
+    });
 </script>
-
 </body>
 </html>
