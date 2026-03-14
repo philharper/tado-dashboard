@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Waiting For Authentication</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="5">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script>
         setTimeout(function () {
             window.location.reload();
@@ -15,12 +15,13 @@
 <div class="auth-shell">
     <section class="auth-card narrow">
         <div class="spinner"></div>
-        <div class="eyebrow">Authorisation In Progress</div>
+        <div class="eyebrow">Step 2</div>
         <h1>Waiting for Tado authentication.</h1>
-        <p class="auth-copy">
-            Finish the sign-in flow in the newly opened tab.
-            This page refreshes every 5 seconds until the session is ready.
-        </p>
+        <p class="auth-copy">Finish sign-in in the Tado tab. This page checks automatically and redirects you into the dashboard as soon as the token is ready.</p>
+        <div class="login-form">
+            <a class="secondary-button" th:if="${verificationUriComplete != null}" th:href="${verificationUriComplete}" target="_blank" rel="noopener noreferrer">Reopen Tado Login</a>
+            <a class="secondary-button" th:href="@{/login-wait}">Check again now</a>
+        </div>
     </section>
 </div>
 </body>

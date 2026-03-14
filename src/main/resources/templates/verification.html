@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Redirecting To Tado</title>
+    <title>Continue To Tado</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" th:href="@{/css/styles.css}">
-    <script th:inline="javascript">
-        window.onload = function () {
-            const url = /*[[${verificationUriComplete}]]*/ "";
-            window.open(url, "_blank");
-            window.location.href = "/login-wait";
-        };
-    </script>
 </head>
 <body class="auth-body">
 <div class="auth-shell">
     <section class="auth-card narrow">
-        <div class="spinner"></div>
-        <div class="eyebrow">Launching Verification</div>
-        <h1>Opening the Tado login flow.</h1>
-        <p class="auth-copy">If a new tab does not open automatically, allow pop-ups for this site and try signing in again.</p>
+        <div class="eyebrow">Step 1</div>
+        <h1>Open the Tado sign-in page.</h1>
+        <p class="auth-copy">Use the button below to open Tado in a new tab. This tab will then wait for authentication and take you straight into the dashboard.</p>
+        <div class="login-form">
+            <a id="open-tado-login"
+               class="primary-button"
+               th:href="${verificationUriComplete}"
+               target="_blank"
+               rel="noopener noreferrer">Open Tado Login</a>
+            <a class="secondary-button" th:href="@{/login}">Start over</a>
+        </div>
     </section>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const button = document.getElementById("open-tado-login");
+        button.addEventListener("click", function () {
+            setTimeout(function () {
+                window.location.href = "/login-wait";
+            }, 150);
+        });
+    });
+</script>
 </body>
 </html>

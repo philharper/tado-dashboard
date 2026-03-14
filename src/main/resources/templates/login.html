@@ -10,17 +10,9 @@
     <section class="auth-card">
         <div class="eyebrow">Tado Dashboard</div>
         <h1>Clean controls for home heating.</h1>
-        <p class="auth-copy">Sign in with your Tado account to view schedules, compare room history, and inspect the current programme in one place.</p>
+        <p class="auth-copy">Start the Tado device login flow, complete authentication in the opened tab, and this page will move into the dashboard once the session is ready.</p>
         <form th:action="@{/login}" method="post" class="login-form">
-            <div class="form-group">
-                <label class="form-label" for="username">Username</label>
-                <input class="field-input" type="text" id="username" name="username" autocomplete="username" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input class="field-input" type="password" id="password" name="password" autocomplete="current-password" required>
-            </div>
-            <button type="submit" class="primary-button">Sign In</button>
+            <button type="submit" class="primary-button">Continue to Tado</button>
         </form>
     </section>
 </div>

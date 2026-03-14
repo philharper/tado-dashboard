@@ -55,6 +55,7 @@ public class TadoService {
     public DeviceAuthorisationResponse authoriseDevice() {
         var deviceAuthReponse = tadoOAuthClient.authorizeDevice(clientId, "offline_access");
         session.setAttribute("deviceCode", deviceAuthReponse.deviceCode());
+        session.setAttribute("verificationUriComplete", deviceAuthReponse.verificationUriComplete());
         return deviceAuthReponse;
     }
 
@@ -70,5 +71,9 @@ public class TadoService {
             return null;
         }
 
+    }
+
+    public String getVerificationUriComplete() {
+        return (String) session.getAttribute("verificationUriComplete");
     }
 }
