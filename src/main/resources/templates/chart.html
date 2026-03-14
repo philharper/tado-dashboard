@@ -142,6 +142,12 @@
             "#9ff29f"
         ];
 
+        function bucketTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            date.setSeconds(0, 0);
+            return date.toISOString();
+        }
+
         const runtimeWindowPlugin = {
             id: "runtimeWindowPlugin",
             beforeDatasetsDraw(chart, args, options) {
@@ -158,8 +164,8 @@
 
                 ctx.save();
                 for (const window of windows) {
-                    const startIndex = sortedTimestamps.indexOf(window.start);
-                    const endIndex = sortedTimestamps.indexOf(window.end);
+                    const startIndex = sortedTimestamps.indexOf(bucketTimestamp(window.start));
+                    const endIndex = sortedTimestamps.indexOf(bucketTimestamp(window.end));
                     if (startIndex === -1) {
                         continue;
                     }
@@ -186,12 +192,19 @@
         const zoneEntries = Object.entries(dayReports)
             .map(([zone, report], index) => {
                 const dataPoints = report?.measuredData?.insideTemperature?.dataPoints ?? [];
-                const cleanedPoints = dataPoints
+                const bucketedPoints = new Map();
+
+                dataPoints
                     .filter((point) => point?.timestamp && point?.value?.celsius !== undefined && point?.value?.celsius !== null)
-                    .map((point) => ({
-                        timestamp: point.timestamp,
-                        celsius: Number(point.value.celsius)
-                    }))
+                    .sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp))
+                    .forEach((point) => {
+                        bucketedPoints.set(bucketTimestamp(point.timestamp), {
+                            timestamp: bucketTimestamp(point.timestamp),
+                            celsius: Number(point.value.celsius)
+                        });
+                    });
+
+                const cleanedPoints = Array.from(bucketedPoints.values())
                     .sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp));
 
                 return {
@@ -243,7 +256,8 @@
                 borderColor: entry.color,
                 backgroundColor: `${entry.color}22`,
                 borderWidth: 3,
-                tension: 0.34,
+                tension: 0.18,
+                cubicInterpolationMode: "monotone",
                 spanGaps: true,
                 pointRadius: 0,
                 pointHoverRadius: 5,
